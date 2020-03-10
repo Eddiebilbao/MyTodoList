@@ -10,41 +10,33 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    //var item = Item()
-    var itemArray = ["Find Mike","Buy Eggos","Destroy Demogorngon"]
-   // var itemsArray = [Item] ()
+
+    var itemArray = [Item] ()
     
-    
-    let userdefaults = UserDefaults.standard
+    let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         // Do any additional setup after loading the view.
 //        let item1 = Item()
 //        item1.title = "Find Mikle"
-//        item1.done = true
-//        itemsArray.append(item1)
+//        itemArray.append(item1)
+//
 //        let item2 = Item()
 //        item2.title = "Buy Eggos"
-//        item1.done = true
-//        itemsArray.append(item2)
+//        itemArray.append(item2)
+//
 //        let item3 = Item()
-//        item3.title = "Destroy morgorngon"
-//        item3.done = true
-//        itemsArray.append(item3)
-//        let item4 = Item()
-//        item4.title = "new item"
-//        item4.done = true
-//        itemsArray.append(item4)
-//        let item5 = Item()
-//        item5.title = "call Jhon"
-//        item5.done = true
-//        itemsArray.append(item5)
-        if let items = userdefaults.array(forKey: "ToDoItem") as? [String]  {
-            itemArray = items
-            
-        }
+//        item3.title = "Destroy Demogorgon"
+//        itemArray.append(item3)
         
+        
+        // copy the save items in the UserDefaults to itemArray
+       
+        itemArray = getItems()!
+        
+
     }
     
     
@@ -56,32 +48,38 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-        print(itemArray[indexPath.row])
+        let cell = UITableViewCell(style: .default, reuseIdentifier: "ToDoItemCell")
         
-        cell.textLabel?.text = itemArray[indexPath.row]
+        //let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        
+        print(itemArray[indexPath.row].title)
+        
+        cell.textLabel?.text = itemArray[indexPath.row].title
+        if itemArray[indexPath.row].done == true {
+            cell.accessoryType = .checkmark
+        }
+        else {
+            cell.accessoryType = .none
+            
+        }
         
         return cell
     }
     
+   
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        }
-        else {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-            
-        }
+        itemArray[indexPath.row].done =   !itemArray[indexPath.row].done
+        tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true)
-       // tableView.cellForRow(at: indexPath)?.isSelected = false
     }
     
    
-    
+    @objc
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         var textField = UITextField()
-        //let item = Item()
+        
         
         let alert = UIAlertController(title: "Add New Item", message: "On your todo list", preferredStyle: .alert)
         
@@ -92,10 +90,26 @@ class TodoListViewController: UITableViewController {
             print("at this time textFieldValue is: \(textField.text!) ")
             
             if textField.text! != "" {
-               // item.title = textField.text!
-                self.itemArray.append(textField.text!)
-                self.userdefaults.set(self.itemArray, forKey: "ToDoItem")
+                let newItem = Item()
+                newItem.title = textField.text!
+                print("Here the new item get its property")
+                print(newItem.title)
+                print(newItem.done)
+                
+               
+                self.itemArray.append(newItem)
+                print("here we getting values of the itemArray itself")
+                print(self.itemArray[self.itemArray.count - 1].title)
+                print(self.itemArray[self.itemArray.count - 1].done)
+                
+                // this one works for just array of string
+                //self.defaults.set(self.itemArray, forKey: "NewToDoListArray")
+                
+                // This Method of using below declared saveItems function works perfectly
+                self.saveItems(self.itemArray)
+                
                 self.tableView.reloadData()
+            
             }
             
         }
@@ -109,6 +123,19 @@ class TodoListViewController: UITableViewController {
         
         alert.addAction(action)
         present(alert,animated: true, completion: nil)
+    }
+    
+    
+    func saveItems(_ list:[Item]) {
+        UserDefaults.standard.set(try? PropertyListEncoder().encode(list), forKey:"NewToDoListArray")
+        UserDefaults.standard.synchronize()
+    }
+    func getItems() -> [Item]? {
+        if let data = UserDefaults.standard.value(forKey:"NewToDoListArray") as? Data {
+            let decodedItems = try? PropertyListDecoder().decode([Item].self, from: data)
+            return decodedItems
+        }
+        return nil
     }
     
 }
